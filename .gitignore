@@ -3,3 +3,6 @@ dist/
 out/
 .vscode-test/
 *.vsix
+
+# Allow .vscode directory for extension development
+!.vscode/
