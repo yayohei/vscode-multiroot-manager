@@ -3,10 +3,9 @@
  */
 
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { ConfigManager } from '../config/configManager';
 import { StateManager } from '../services/stateManager';
-import { Project, Issue, TreeItemContext, TreeItemType } from '../models/types';
+import { Project, Issue } from '../models/types';
 
 type TreeNode = ProjectNode | IssueNode | RepoNode;
 
@@ -114,6 +113,9 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<TreeNode> {
    * Get all repos for an issue
    */
   private getRepos(issue: Issue, project: Project): RepoNode[] {
+    if (!issue.repos || !Array.isArray(issue.repos)) {
+      return [];
+    }
     return issue.repos.map(repo => new RepoNode(repo.name, issue, project));
   }
 

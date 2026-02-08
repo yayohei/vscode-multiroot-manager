@@ -127,7 +127,7 @@ export class ConfigManager {
         const content = fs.readFileSync(filePath, 'utf-8');
         const projectData = yaml.parse(content);
 
-        if (projectData && projectData.repositories) {
+        if (projectData && projectData.repositories && Array.isArray(projectData.repositories)) {
           const projectId = path.basename(file, path.extname(file));
           projects.push({
             id: projectId,

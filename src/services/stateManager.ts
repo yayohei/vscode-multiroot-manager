@@ -23,12 +23,59 @@ export class StateManager {
 
     try {
       const content = fs.readFileSync(issuesFile, 'utf-8');
-      const data: IssuesData = yaml.parse(content) || { issues: [] };
-      return data.issues || [];
+      const data: any = yaml.parse(content);
+
+      if (!data || !Array.isArray(data.issues)) {
+        return [];
+      }
+
+      // Convert CLI format to Extension format if needed
+      return data.issues.map((issue: any) => this.normalizeIssue(issue)).filter((i: Issue | null) => i !== null);
     } catch (error) {
       console.error(`Failed to load issues for ${projectId}: ${error}`);
       return [];
     }
+  }
+
+  /**
+   * Normalize issue data from CLI format to Extension format
+   */
+  private normalizeIssue(rawIssue: any): Issue | null {
+    if (!rawIssue || !rawIssue.id) {
+      return null;
+    }
+
+    // Determine workspaceDir from different formats
+    let workspaceDir = '';
+    if (rawIssue.workspaceDir) {
+      workspaceDir = rawIssue.workspaceDir;
+    } else if (rawIssue.workspace && rawIssue.workspace.path) {
+      // CLI format: extract directory from workspace file path
+      workspaceDir = path.dirname(rawIssue.workspace.path);
+    }
+
+    // Normalize repositories array
+    const repos = Array.isArray(rawIssue.repositories)
+      ? rawIssue.repositories.map((repo: any) => ({
+          name: repo.name || '',
+          branch: repo.branch || '',
+          worktreePath: repo.worktreePath || path.join(workspaceDir, repo.name || ''),
+          created: repo.created || false,
+          pushed: repo.pushed || false
+        }))
+      : (Array.isArray(rawIssue.repos) ? rawIssue.repos : []);
+
+    return {
+      id: rawIssue.id,
+      title: rawIssue.title,
+      description: rawIssue.description,
+      projectId: rawIssue.projectId || rawIssue.project_id || '',
+      status: rawIssue.status || 'active',
+      workspaceDir,
+      repos,
+      createdAt: rawIssue.createdAt || rawIssue.created_at || new Date().toISOString(),
+      updatedAt: rawIssue.updatedAt || rawIssue.updated_at || new Date().toISOString()
+    };
   }
 
   /**
