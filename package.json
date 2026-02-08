@@ -1,0 +1,178 @@
+{
+  "name": "vscode-multiroot-manager",
+  "displayName": "Multiroot Manager",
+  "description": "Manage multi-repository workspaces per issue/ticket with git worktree, GitHub integration, and Claude Code context",
+  "version": "0.1.0",
+  "publisher": "itpf-1g-dena",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:mrmProjects"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mrm-explorer",
+          "title": "Multiroot Manager",
+          "icon": "$(folder-library)"
+        }
+      ]
+    },
+    "views": {
+      "mrm-explorer": [
+        {
+          "id": "mrmProjects",
+          "name": "Projects"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "mrm.createIssue",
+        "title": "MRM: Create Issue",
+        "icon": "$(add)"
+      },
+      {
+        "command": "mrm.openWorkspace",
+        "title": "MRM: Open Workspace",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "mrm.createPR",
+        "title": "MRM: Create Pull Request",
+        "icon": "$(git-pull-request)"
+      },
+      {
+        "command": "mrm.reviewCode",
+        "title": "MRM: AI Code Review",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "mrm.deleteIssue",
+        "title": "MRM: Delete Issue",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "mrm.refreshAll",
+        "title": "MRM: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "mrm.showStatus",
+        "title": "MRM: Show Issue Status",
+        "icon": "$(info)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "mrm.createIssue",
+          "when": "view == mrmProjects",
+          "group": "navigation"
+        },
+        {
+          "command": "mrm.refreshAll",
+          "when": "view == mrmProjects",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "mrm.openWorkspace",
+          "when": "view == mrmProjects && viewItem == issue",
+          "group": "inline"
+        },
+        {
+          "command": "mrm.createPR",
+          "when": "view == mrmProjects && viewItem == issue",
+          "group": "mrm@1"
+        },
+        {
+          "command": "mrm.reviewCode",
+          "when": "view == mrmProjects && viewItem == issue",
+          "group": "mrm@2"
+        },
+        {
+          "command": "mrm.deleteIssue",
+          "when": "view == mrmProjects && viewItem == issue",
+          "group": "mrm@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Multiroot Manager",
+      "properties": {
+        "mrm.configDir": {
+          "type": "string",
+          "default": "~/.config/vscode-multiroot-manager",
+          "description": "Path to mrm configuration directory"
+        },
+        "mrm.workspaceDir": {
+          "type": "string",
+          "default": "~/workspaces",
+          "description": "Path to workspace output directory"
+        },
+        "mrm.branchNaming.pattern": {
+          "type": "string",
+          "default": "feature/{issue_id}",
+          "description": "Branch naming pattern ({issue_id} will be replaced)"
+        },
+        "mrm.branchNaming.separator": {
+          "type": "string",
+          "default": "-",
+          "description": "Separator for branch names"
+        },
+        "mrm.github.defaultOwner": {
+          "type": "string",
+          "default": "",
+          "description": "Default GitHub repository owner"
+        },
+        "mrm.github.defaultRepo": {
+          "type": "string",
+          "default": "",
+          "description": "Default GitHub repository name"
+        },
+        "mrm.gemini.model": {
+          "type": "string",
+          "default": "gemini-2.5-flash",
+          "description": "Gemini model to use for AI features"
+        },
+        "mrm.gemini.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI-powered features (review, PR description)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.0",
+    "esbuild": "^0.21.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.0.0",
+    "simple-git": "^3.24.0",
+    "yaml": "^2.4.0"
+  }
+}
