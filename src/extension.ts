@@ -8,11 +8,13 @@ import { ConfigManager } from './config/configManager';
 import { StateManager } from './services/stateManager';
 import { IssueService } from './services/issueService';
 import { ProjectTreeProvider } from './views/projectTreeProvider';
+import { StatusBarManager } from './statusBar/statusBarManager';
 import { CreateIssueOptions, DeleteIssueOptions } from './models/types';
 import * as path from 'path';
 
 let issueService: IssueService;
 let treeProvider: ProjectTreeProvider;
+let statusBarManager: StatusBarManager;
 
 export function activate(context: vscode.ExtensionContext): void {
   const outputChannel = vscode.window.createOutputChannel('Multiroot Manager');
@@ -27,6 +29,10 @@ export function activate(context: vscode.ExtensionContext): void {
   treeProvider = new ProjectTreeProvider(configManager, stateManager);
   vscode.window.registerTreeDataProvider('mrmProjects', treeProvider);
 
+  // Initialize Status Bar
+  statusBarManager = new StatusBarManager(configManager, stateManager);
+  statusBarManager.activate(context);
+
   // Register commands
   context.subscriptions.push(
     vscode.commands.registerCommand('mrm.createIssue', createIssueCommand),
@@ -34,6 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('mrm.deleteIssue', deleteIssueCommand),
     vscode.commands.registerCommand('mrm.refreshAll', refreshAllCommand),
     vscode.commands.registerCommand('mrm.showStatus', showStatusCommand),
+    vscode.commands.registerCommand('mrm.switchIssue', switchIssueCommand),
     // PR and Review commands - Phase 3
     vscode.commands.registerCommand('mrm.createPR', createPRCommand),
     vscode.commands.registerCommand('mrm.reviewCode', reviewCodeCommand)
@@ -119,25 +126,27 @@ async function createIssueCommand(): Promise<void> {
 
         const issue = await issueService.createIssue(options);
 
-        progress.report({ increment: 100, message: 'Done!' });
-
-        // Refresh tree view
+        // Refresh tree view and status bar
         treeProvider.refresh();
-
-        // Ask to open workspace
-        const openNow = await vscode.window.showInformationMessage(
-          `Issue ${issueId} created successfully!`,
-          'Open Workspace',
-          'Later'
-        );
-
-        if (openNow === 'Open Workspace') {
-          const workspaceFile = path.join(issue.workspaceDir, `${issueId}.code-workspace`);
-          const uri = vscode.Uri.file(workspaceFile);
-          await vscode.commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: true });
-        }
+        statusBarManager.detectAndUpdateCurrentIssue();
       }
     );
+
+    // Show success message and ask to open workspace
+    const openNow = await vscode.window.showInformationMessage(
+      `Issue ${issueId} created successfully!`,
+      'Open Workspace',
+      'Later'
+    );
+
+    if (openNow === 'Open Workspace') {
+      const issue = issueService.getIssue(selectedProject.projectId, issueId);
+      if (issue) {
+        const workspaceFile = path.join(issue.workspaceDir, `${issueId}.code-workspace`);
+        const uri = vscode.Uri.file(workspaceFile);
+        await vscode.commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: true });
+      }
+    }
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to create issue: ${error}`);
   }
@@ -269,14 +278,13 @@ async function deleteIssueCommand(item?: any): Promise<void> {
         const options: DeleteIssueOptions = { deleteBranches };
         await issueService.deleteIssue(projectId, issueToDelete.id, options);
 
-        progress.report({ increment: 100, message: 'Done!' });
-
-        // Refresh tree view
+        // Refresh tree view and status bar
         treeProvider.refresh();
-
-        vscode.window.showInformationMessage(`Issue ${issueToDelete.id} deleted successfully`);
+        statusBarManager.detectAndUpdateCurrentIssue();
       }
     );
+
+    vscode.window.showInformationMessage(`Issue ${issueToDelete.id} deleted successfully`);
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to delete issue: ${error}`);
   }
@@ -287,6 +295,7 @@ async function deleteIssueCommand(item?: any): Promise<void> {
  */
 function refreshAllCommand(): void {
   treeProvider.refresh();
+  statusBarManager.detectAndUpdateCurrentIssue();
   vscode.window.showInformationMessage('Refreshed');
 }
 
@@ -315,6 +324,65 @@ async function showStatusCommand(item?: any): Promise<void> {
   ].filter(Boolean);
 
   vscode.window.showInformationMessage(lines.join('\n'));
+}
+
+/**
+ * Switch Issue command (Quick Pick)
+ */
+async function switchIssueCommand(): Promise<void> {
+  try {
+    const configManager = new ConfigManager();
+    const projects = configManager.loadProjects();
+    const stateManager = new StateManager(configManager.getConfigDir());
+
+    // Build issue items for Quick Pick
+    const issueItems: Array<{
+      label: string;
+      description: string;
+      detail: string;
+      issue: any;
+      projectId: string;
+    }> = [];
+
+    for (const project of projects) {
+      const issues = stateManager.loadIssues(project.id);
+      for (const issue of issues) {
+        issueItems.push({
+          label: `$(folder) ${issue.id}${issue.title ? ` - ${issue.title}` : ''}`,
+          description: project.name,
+          detail: `${issue.repos.length} ${issue.repos.length === 1 ? 'repo' : 'repos'} | ${issue.status}`,
+          issue,
+          projectId: project.id
+        });
+      }
+    }
+
+    if (issueItems.length === 0) {
+      vscode.window.showInformationMessage('No issues found');
+      return;
+    }
+
+    // Show Quick Pick
+    const selected = await vscode.window.showQuickPick(issueItems, {
+      placeHolder: 'Select an issue to switch to',
+      matchOnDescription: true,
+      matchOnDetail: true
+    });
+
+    if (!selected) {
+      return;
+    }
+
+    // Open workspace
+    const workspaceFile = path.join(
+      selected.issue.workspaceDir,
+      `${selected.issue.id}.code-workspace`
+    );
+    const uri = vscode.Uri.file(workspaceFile);
+    await vscode.commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: true });
+  } catch (error) {
+    vscode.window.showErrorMessage(`Failed to switch issue: ${error}`);
+  }
 }
 
 /**
