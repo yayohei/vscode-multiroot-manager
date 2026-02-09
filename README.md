@@ -1,0 +1,179 @@
+# VS Code Multiroot Manager
+
+Manage multi-repository workspaces per issue/ticket with git worktree, GitHub integration, and workspace automation.
+
+## Features
+
+### Core Features (Phase 2 - ✅ Implemented)
+
+- **Issue Creation**: Create issues with automatic worktree and branch setup across multiple repositories
+- **Workspace Generation**: Generate `.code-workspace` files with all repositories included
+- **Issue Management**: View all projects and issues in a tree view
+- **Issue Deletion**: Clean up worktrees, branches, and workspace files
+- **CLI Compatibility**: Shares configuration with the `mrm` CLI tool (`~/.config/vscode-multiroot-manager/`)
+
+### TreeView
+
+Browse projects and issues in the Activity Bar sidebar:
+
+```
+MRM: Projects
+├── web-app (3 repos, 5 issues)
+│   ├── SHOP-456 - Add payment retry   [active]
+│   │   ├── frontend   ✓pushed
+│   │   ├── backend    ✓pushed
+│   │   └── common     ✓pushed
+│   └── SHOP-457 - Fix cart timeout    [active]
+└── mobile-app (2 repos, 3 issues)
+```
+
+### Commands
+
+- `MRM: Create Issue` - Create a new issue with worktrees
+- `MRM: Open Workspace` - Open issue workspace in new window
+- `MRM: Delete Issue` - Delete issue and clean up resources
+- `MRM: Refresh` - Refresh tree view
+- `MRM: Show Status` - Show issue details
+
+## Requirements
+
+- VS Code 1.85.0 or higher
+- Git installed and configured
+- Repositories cloned locally
+
+## Installation
+
+### From VSIX (Development)
+
+```bash
+code --install-extension vscode-multiroot-manager-0.1.0.vsix
+```
+
+### From Marketplace (Coming Soon)
+
+Search for "Multiroot Manager" in VS Code Extensions.
+
+## Configuration
+
+### Project Setup
+
+Create project configuration files in `~/.config/vscode-multiroot-manager/projects/`:
+
+```yaml
+# ~/.config/vscode-multiroot-manager/projects/my-project.yaml
+name: My Project
+description: Multi-repo project description
+
+repositories:
+  - name: frontend
+    path: ~/repos/my-project-frontend
+    default_branch: main
+  - name: backend
+    path: ~/repos/my-project-backend
+    default_branch: main
+
+branch_naming:
+  pattern: "feature/{issue_id}"
+```
+
+### VS Code Settings
+
+```json
+{
+  "mrm.configDir": "~/.config/vscode-multiroot-manager",
+  "mrm.workspaceDir": "~/workspaces",
+  "mrm.branchNaming.pattern": "feature/{issue_id}",
+  "mrm.branchNaming.separator": "-"
+}
+```
+
+## Usage
+
+### Create an Issue
+
+1. Click the Multiroot Manager icon in the Activity Bar
+2. Run `MRM: Create Issue` from Command Palette
+3. Select project
+4. Enter issue ID (e.g., `SHOP-123`)
+5. Optionally enter title and description
+6. Extension will:
+   - Create worktrees for each repository
+   - Create feature branches
+   - Generate `.code-workspace` file
+   - Generate `.claude.md` context file
+
+### Open Workspace
+
+- Click "Open Workspace" in the tree view
+- Or run `MRM: Open Workspace` and select issue
+- New VS Code window opens with all repositories
+
+### Delete Issue
+
+- Right-click issue in tree view → `Delete Issue`
+- Choose deletion option:
+  - **Keep Branches**: Remove worktrees and workspace files only
+  - **Remove Branches**: Delete everything including git branches
+
+## CLI Compatibility
+
+This extension is compatible with the `mrm` CLI tool and shares the same configuration directory (`~/.config/vscode-multiroot-manager/`).
+
+You can use both the extension and CLI tool interchangeably.
+
+## Architecture
+
+- **Config Manager**: Reads YAML configuration files and VS Code settings
+- **Git Service**: Manages worktree and branch operations (via `simple-git`)
+- **Workspace Service**: Generates `.code-workspace` files
+- **State Manager**: Persists issue state in `data/{project}/issues.yaml`
+- **Issue Service**: Orchestrates issue creation and deletion
+- **TreeView**: Displays projects, issues, and repositories
+
+## Roadmap
+
+### Phase 3: GitHub Integration (Planned)
+- Fetch issue metadata from GitHub
+- Create pull requests
+- Display CI status in tree view
+
+### Phase 4: AI Integration (Planned)
+- Gemini-powered code review
+- AI-generated PR descriptions
+
+### Phase 5: Polish (Planned)
+- Enhanced error handling
+- Status refresh automation
+- Workspace templates
+
+## Development
+
+### Build
+
+```bash
+npm install
+npm run build
+```
+
+### Debug
+
+Press `F5` to launch Extension Development Host.
+
+### Lint
+
+```bash
+npm run lint
+```
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+## Support
+
+For issues and feature requests, please visit:
+https://github.com/yohei-yamamoto_dena/vscode-multiroot-manager-extension/issues
