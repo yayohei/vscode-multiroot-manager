@@ -40,10 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('mrm.deleteIssue', deleteIssueCommand),
     vscode.commands.registerCommand('mrm.refreshAll', refreshAllCommand),
     vscode.commands.registerCommand('mrm.showStatus', showStatusCommand),
-    vscode.commands.registerCommand('mrm.switchIssue', switchIssueCommand),
-    // PR and Review commands - Phase 3
-    vscode.commands.registerCommand('mrm.createPR', createPRCommand),
-    vscode.commands.registerCommand('mrm.reviewCode', reviewCodeCommand)
+    vscode.commands.registerCommand('mrm.switchIssue', switchIssueCommand)
   );
 
   outputChannel.appendLine('All commands registered');
@@ -383,20 +380,6 @@ async function switchIssueCommand(): Promise<void> {
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to switch issue: ${error}`);
   }
-}
-
-/**
- * Create PR command (Phase 3 - placeholder)
- */
-function createPRCommand(): void {
-  vscode.window.showInformationMessage('Create PR - Not yet implemented (Phase 3)');
-}
-
-/**
- * Review Code command (Phase 4 - placeholder)
- */
-function reviewCodeCommand(): void {
-  vscode.window.showInformationMessage('AI Code Review - Not yet implemented (Phase 4)');
 }
 
 export function deactivate(): void {

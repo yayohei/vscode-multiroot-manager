@@ -45,14 +45,9 @@
         "icon": "$(folder-opened)"
       },
       {
-        "command": "mrm.createPR",
-        "title": "MRM: Create Pull Request",
-        "icon": "$(git-pull-request)"
-      },
-      {
-        "command": "mrm.reviewCode",
-        "title": "MRM: AI Code Review",
-        "icon": "$(eye)"
+        "command": "mrm.switchIssue",
+        "title": "MRM: Switch Issue",
+        "icon": "$(arrow-swap)"
       },
       {
         "command": "mrm.deleteIssue",
@@ -90,19 +85,14 @@
           "group": "inline"
         },
         {
-          "command": "mrm.createPR",
+          "command": "mrm.showStatus",
           "when": "view == mrmProjects && viewItem == issue",
           "group": "mrm@1"
         },
         {
-          "command": "mrm.reviewCode",
-          "when": "view == mrmProjects && viewItem == issue",
-          "group": "mrm@2"
-        },
-        {
           "command": "mrm.deleteIssue",
           "when": "view == mrmProjects && viewItem == issue",
-          "group": "mrm@3"
+          "group": "mrm@2"
         }
       ]
     },
