@@ -78,6 +78,29 @@ branch_naming:
 
 ### VS Code Settings
 
+Settings can be changed through VS Code UI or settings.json.
+
+#### Through UI (Recommended)
+
+1. Open Settings: `Cmd+,` (macOS) or `Ctrl+,` (Windows/Linux)
+2. Search for "Multiroot Manager" or "mrm"
+3. Modify settings as needed
+
+#### Available Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `mrm.configDir` | `~/.config/vscode-multiroot-manager` | Configuration directory (shared with CLI) |
+| `mrm.workspaceDir` | `~/workspaces` | Workspace output directory |
+| `mrm.branchNaming.pattern` | `feature/{issue_id}` | Branch naming pattern |
+| `mrm.branchNaming.separator` | `-` | Separator for issue IDs (`-`, `_`, or `/`) |
+| `mrm.github.defaultOwner` | `""` | Default GitHub owner (Phase 3) |
+| `mrm.github.defaultRepo` | `""` | Default GitHub repo (Phase 3) |
+| `mrm.gemini.model` | `gemini-2.5-flash` | Gemini AI model (Phase 4) |
+| `mrm.gemini.enabled` | `true` | Enable AI features (Phase 4) |
+
+#### Through settings.json
+
 ```json
 {
   "mrm.configDir": "~/.config/vscode-multiroot-manager",

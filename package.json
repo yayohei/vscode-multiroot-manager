@@ -102,42 +102,85 @@
         "mrm.configDir": {
           "type": "string",
           "default": "~/.config/vscode-multiroot-manager",
-          "description": "Path to mrm configuration directory"
+          "scope": "machine",
+          "order": 1,
+          "description": "Configuration directory path",
+          "markdownDescription": "Path to mrm configuration directory\n\n**Note**: Shared with CLI tool. Contains `config.yaml`, `projects/`, `data/`"
         },
         "mrm.workspaceDir": {
           "type": "string",
           "default": "~/workspaces",
-          "description": "Path to workspace output directory"
+          "scope": "machine",
+          "order": 2,
+          "description": "Workspace output directory",
+          "markdownDescription": "Path where issue workspaces will be created\n\n**Default**: `~/workspaces`\n\n**Structure**: `{workspaceDir}/{project}/{issue}/`"
         },
         "mrm.branchNaming.pattern": {
           "type": "string",
           "default": "feature/{issue_id}",
-          "description": "Branch naming pattern ({issue_id} will be replaced)"
+          "scope": "window",
+          "order": 10,
+          "description": "Branch naming pattern",
+          "markdownDescription": "Pattern for branch names. Use `{issue_id}` as placeholder\n\n**Examples**:\n- `feature/{issue_id}` → `feature/SHOP-123`\n- `{issue_id}` → `SHOP-123`\n- `work/{issue_id}` → `work/SHOP-123`",
+          "editPresentation": "multilineText"
         },
         "mrm.branchNaming.separator": {
           "type": "string",
           "default": "-",
-          "description": "Separator for branch names"
+          "scope": "window",
+          "order": 11,
+          "enum": ["-", "_", "/"],
+          "enumDescriptions": [
+            "Hyphen (recommended): SHOP-123",
+            "Underscore: SHOP_123",
+            "Slash: SHOP/123"
+          ],
+          "description": "Separator for issue IDs with spaces",
+          "markdownDescription": "Separator used when issue ID contains spaces\n\n**Example**: `SHOP 123` → `SHOP-123`"
         },
         "mrm.github.defaultOwner": {
           "type": "string",
           "default": "",
-          "description": "Default GitHub repository owner"
+          "scope": "window",
+          "order": 20,
+          "description": "Default GitHub organization/owner",
+          "markdownDescription": "Default GitHub repository owner for PR creation\n\n**Example**: `octocat` or `my-organization`\n\n_(Phase 3 feature)_"
         },
         "mrm.github.defaultRepo": {
           "type": "string",
           "default": "",
-          "description": "Default GitHub repository name"
+          "scope": "window",
+          "order": 21,
+          "description": "Default GitHub repository name",
+          "markdownDescription": "Default GitHub repository name for PR creation\n\n**Example**: `my-repo`\n\n_(Phase 3 feature)_"
         },
         "mrm.gemini.model": {
           "type": "string",
           "default": "gemini-2.5-flash",
-          "description": "Gemini model to use for AI features"
+          "scope": "window",
+          "order": 30,
+          "enum": [
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
+            "gemini-1.5-flash",
+            "gemini-1.5-pro"
+          ],
+          "enumDescriptions": [
+            "Gemini 2.5 Flash - Fastest, recommended",
+            "Gemini 2.5 Pro - Most capable",
+            "Gemini 1.5 Flash - Fast, older version",
+            "Gemini 1.5 Pro - Capable, older version"
+          ],
+          "description": "Gemini AI model",
+          "markdownDescription": "Gemini model for AI-powered features\n\n**Recommended**: `gemini-2.5-flash`\n\n_(Phase 4 feature)_"
         },
         "mrm.gemini.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable AI-powered features (review, PR description)"
+          "scope": "window",
+          "order": 31,
+          "description": "Enable AI-powered features",
+          "markdownDescription": "Enable AI-powered features (code review, PR description)\n\n**Requires**: Gemini API key\n\n_(Phase 4 feature)_"
         }
       }
     }
