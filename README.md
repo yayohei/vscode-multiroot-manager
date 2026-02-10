@@ -29,11 +29,20 @@ MRM: Projects
 
 ### Commands
 
+**Project Management**
+- `MRM: Create Project` - Create a new project with interactive wizard
+- `MRM: Show Project Info` - Display project details and configuration
+- `MRM: Edit Project YAML` - Open project configuration file in editor
+
+**Issue Management**
 - `MRM: Create Issue` - Create a new issue with worktrees
 - `MRM: Open Workspace` - Open issue workspace in new window
+- `MRM: Switch Issue` - Quick Pick for switching between issues
 - `MRM: Delete Issue` - Delete issue and clean up resources
-- `MRM: Refresh` - Refresh tree view
 - `MRM: Show Status` - Show issue details
+
+**General**
+- `MRM: Refresh` - Refresh tree view
 
 ## Requirements
 
@@ -57,7 +66,25 @@ Search for "Multiroot Manager" in VS Code Extensions.
 
 ### Project Setup
 
-Create project configuration files in `~/.config/vscode-multiroot-manager/projects/`:
+#### Using Interactive Wizard (Recommended)
+
+1. Click the Multiroot Manager icon in the Activity Bar
+2. Click the "New Folder" icon in the toolbar (or run `MRM: Create Project`)
+3. Follow the wizard:
+   - Enter project ID (filename, e.g., `my-project`)
+   - Enter project name (display name, e.g., `My Project`)
+   - Enter description (optional)
+   - Add repositories:
+     - Enter repository name (e.g., `frontend`)
+     - Select repository folder via dialog
+     - Enter default branch (e.g., `main`)
+     - Choose to add another repository or finish
+4. Review and confirm
+5. Project configuration will be saved to `~/.config/vscode-multiroot-manager/projects/{projectId}.yaml`
+
+#### Manual Configuration
+
+Alternatively, create project configuration files directly:
 
 ```yaml
 # ~/.config/vscode-multiroot-manager/projects/my-project.yaml
@@ -111,6 +138,41 @@ Settings can be changed through VS Code UI or settings.json.
 ```
 
 ## Usage
+
+### Create a Project
+
+1. Click the Multiroot Manager icon in the Activity Bar
+2. Click the "New Folder" icon in the toolbar (or run `MRM: Create Project`)
+3. Follow the interactive wizard:
+   - Enter project ID (used as filename)
+   - Enter project name (display name)
+   - Optionally enter description
+   - Add repositories (name, path, default branch)
+4. Project configuration will be saved and appear in the tree view
+
+### View/Edit Project
+
+**Show Project Info (Webview)**
+1. Right-click project in tree view → `Show Project Info`
+2. Webview panel opens with detailed project information:
+   - Project name, description, ID
+   - Repository list (name, path, default branch, remote)
+   - Issues list with status summary
+3. Click **✏️ Edit Project** button to enter edit mode
+4. Edit project settings:
+   - Update project name and description
+   - Modify repository details (name, path, branch, remote)
+   - ➕ Add new repositories
+   - 🗑️ Remove repositories
+5. Click **💾 Save** to apply changes
+6. Click **❌ Cancel** to discard changes
+
+**Edit Project YAML (Advanced)**
+1. Right-click project in tree view → `Edit Project YAML`
+2. Configuration file opens in editor
+3. Edit YAML directly for advanced configuration
+4. Save file to apply changes
+5. Run `MRM: Refresh` to reload configuration
 
 ### Create an Issue
 

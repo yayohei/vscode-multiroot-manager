@@ -35,6 +35,21 @@
     },
     "commands": [
       {
+        "command": "mrm.createProject",
+        "title": "MRM: Create Project",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "mrm.showProjectInfo",
+        "title": "MRM: Show Project Info",
+        "icon": "$(info)"
+      },
+      {
+        "command": "mrm.editProject",
+        "title": "MRM: Edit Project YAML",
+        "icon": "$(edit)"
+      },
+      {
         "command": "mrm.createIssue",
         "title": "MRM: Create Issue",
         "icon": "$(add)"
@@ -68,17 +83,32 @@
     "menus": {
       "view/title": [
         {
+          "command": "mrm.createProject",
+          "when": "view == mrmProjects",
+          "group": "navigation@1"
+        },
+        {
           "command": "mrm.createIssue",
           "when": "view == mrmProjects",
-          "group": "navigation"
+          "group": "navigation@2"
         },
         {
           "command": "mrm.refreshAll",
           "when": "view == mrmProjects",
-          "group": "navigation"
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
+        {
+          "command": "mrm.showProjectInfo",
+          "when": "view == mrmProjects && viewItem == project",
+          "group": "project@1"
+        },
+        {
+          "command": "mrm.editProject",
+          "when": "view == mrmProjects && viewItem == project",
+          "group": "project@2"
+        },
         {
           "command": "mrm.openWorkspace",
           "when": "view == mrmProjects && viewItem == issue",
