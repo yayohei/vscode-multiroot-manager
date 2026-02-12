@@ -28,17 +28,28 @@ export class WorkspaceService {
   ): string {
     const workspaceFilePath = path.join(issueDir, `${issueId}.code-workspace`);
 
-    // Create folders array (all repo worktrees)
-    const folders: WorkspaceFolder[] = repos.map(repo => {
+    // Create folders array with workspace root first
+    const folders: WorkspaceFolder[] = [
+      {
+        path: '.',
+        name: '📁 Workspace Root'
+      }
+    ];
+
+    // Add repository folders with org-aware naming
+    repos.forEach(repo => {
       const org = repoOrgs?.get(repo.name);
       const folderPath = org
-        ? path.join(issueDir, org, repo.name)
-        : path.join(issueDir, repo.name);
+        ? `./${org}/${repo.name}`
+        : `./${repo.name}`;
+      const folderName = org
+        ? `${org}/${repo.name}`
+        : repo.name;
 
-      return {
+      folders.push({
         path: folderPath,
-        name: repo.name
-      };
+        name: folderName
+      });
     });
 
     // Create workspace configuration

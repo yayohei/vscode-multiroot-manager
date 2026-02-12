@@ -1,5 +1,17 @@
 # Change Log
 
+## [0.1.1] - 2026-02-12
+
+### Improved
+- **Workspace structure enhancement**: Added workspace root folder for better visibility
+- **Organization display**: Show org name in folder names (e.g., `org/repo`)
+- **Relative paths**: Use relative paths in `.code-workspace` for better portability
+
+### Changed
+- `.code-workspace` now includes workspace root (`.`) as first folder
+- Folder names show full `org/repo` path instead of just repo name
+- Folder paths are now relative (`./org/repo`) instead of absolute
+
 ## [0.1.0] - 2026-02-12
 
 ### Added
