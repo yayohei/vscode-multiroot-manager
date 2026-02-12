@@ -1,0 +1,246 @@
+{
+  "name": "vscode-multiroot-manager",
+  "displayName": "Multiroot Manager",
+  "description": "Manage multi-repository workspaces per issue/ticket with git worktree, GitHub integration, and Claude Code context",
+  "version": "0.1.1",
+  "publisher": "yayohei",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:mrmProjects"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mrm-explorer",
+          "title": "Multiroot Manager",
+          "icon": "$(folder-library)"
+        }
+      ]
+    },
+    "views": {
+      "mrm-explorer": [
+        {
+          "id": "mrmProjects",
+          "name": "Projects"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "mrm.createProject",
+        "title": "MRM: Create Project",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "mrm.showProjectInfo",
+        "title": "MRM: Show Project Info",
+        "icon": "$(info)"
+      },
+      {
+        "command": "mrm.editProject",
+        "title": "MRM: Edit Project YAML",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "mrm.createIssue",
+        "title": "MRM: Create Issue",
+        "icon": "$(add)"
+      },
+      {
+        "command": "mrm.openWorkspace",
+        "title": "MRM: Open Workspace",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "mrm.switchIssue",
+        "title": "MRM: Switch Issue",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "mrm.deleteIssue",
+        "title": "MRM: Delete Issue",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "mrm.refreshAll",
+        "title": "MRM: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "mrm.showStatus",
+        "title": "MRM: Show Issue Status",
+        "icon": "$(info)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "mrm.createProject",
+          "when": "view == mrmProjects",
+          "group": "navigation@1"
+        },
+        {
+          "command": "mrm.createIssue",
+          "when": "view == mrmProjects",
+          "group": "navigation@2"
+        },
+        {
+          "command": "mrm.refreshAll",
+          "when": "view == mrmProjects",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "mrm.showProjectInfo",
+          "when": "view == mrmProjects && viewItem == project",
+          "group": "project@1"
+        },
+        {
+          "command": "mrm.editProject",
+          "when": "view == mrmProjects && viewItem == project",
+          "group": "project@2"
+        },
+        {
+          "command": "mrm.openWorkspace",
+          "when": "view == mrmProjects && viewItem == issue",
+          "group": "inline"
+        },
+        {
+          "command": "mrm.showStatus",
+          "when": "view == mrmProjects && viewItem == issue",
+          "group": "mrm@1"
+        },
+        {
+          "command": "mrm.deleteIssue",
+          "when": "view == mrmProjects && viewItem == issue",
+          "group": "mrm@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Multiroot Manager",
+      "properties": {
+        "mrm.configDir": {
+          "type": "string",
+          "default": "~/.config/vscode-multiroot-manager",
+          "scope": "machine",
+          "order": 1,
+          "description": "Configuration directory path",
+          "markdownDescription": "Path to mrm configuration directory\n\n**Note**: Shared with CLI tool. Contains `config.yaml`, `projects/`, `data/`"
+        },
+        "mrm.workspaceDir": {
+          "type": "string",
+          "default": "~/workspaces",
+          "scope": "machine",
+          "order": 2,
+          "description": "Workspace output directory",
+          "markdownDescription": "Path where issue workspaces will be created\n\n**Default**: `~/workspaces`\n\n**Structure**: `{workspaceDir}/{project}/{issue}/`"
+        },
+        "mrm.branchNaming.pattern": {
+          "type": "string",
+          "default": "feature/{issue_id}",
+          "scope": "window",
+          "order": 10,
+          "description": "Branch naming pattern",
+          "markdownDescription": "Pattern for branch names. Use `{issue_id}` as placeholder\n\n**Examples**:\n- `feature/{issue_id}` → `feature/SHOP-123`\n- `{issue_id}` → `SHOP-123`\n- `work/{issue_id}` → `work/SHOP-123`",
+          "editPresentation": "multilineText"
+        },
+        "mrm.branchNaming.separator": {
+          "type": "string",
+          "default": "-",
+          "scope": "window",
+          "order": 11,
+          "enum": [
+            "-",
+            "_",
+            "/"
+          ],
+          "enumDescriptions": [
+            "Hyphen (recommended): SHOP-123",
+            "Underscore: SHOP_123",
+            "Slash: SHOP/123"
+          ],
+          "description": "Separator for issue IDs with spaces",
+          "markdownDescription": "Separator used when issue ID contains spaces\n\n**Example**: `SHOP 123` → `SHOP-123`"
+        },
+        "mrm.github.defaultOwner": {
+          "type": "string",
+          "default": "",
+          "scope": "window",
+          "order": 20,
+          "description": "Default GitHub organization/owner",
+          "markdownDescription": "Default GitHub repository owner for PR creation\n\n**Example**: `octocat` or `my-organization`\n\n_(Phase 3 feature)_"
+        },
+        "mrm.github.defaultRepo": {
+          "type": "string",
+          "default": "",
+          "scope": "window",
+          "order": 21,
+          "description": "Default GitHub repository name",
+          "markdownDescription": "Default GitHub repository name for PR creation\n\n**Example**: `my-repo`\n\n_(Phase 3 feature)_"
+        },
+        "mrm.gemini.model": {
+          "type": "string",
+          "default": "gemini-2.5-flash",
+          "scope": "window",
+          "order": 30,
+          "enum": [
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
+            "gemini-1.5-flash",
+            "gemini-1.5-pro"
+          ],
+          "enumDescriptions": [
+            "Gemini 2.5 Flash - Fastest, recommended",
+            "Gemini 2.5 Pro - Most capable",
+            "Gemini 1.5 Flash - Fast, older version",
+            "Gemini 1.5 Pro - Capable, older version"
+          ],
+          "description": "Gemini AI model",
+          "markdownDescription": "Gemini model for AI-powered features\n\n**Recommended**: `gemini-2.5-flash`\n\n_(Phase 4 feature)_"
+        },
+        "mrm.gemini.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "order": 31,
+          "description": "Enable AI-powered features",
+          "markdownDescription": "Enable AI-powered features (code review, PR description)\n\n**Requires**: Gemini API key\n\n_(Phase 4 feature)_"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.0",
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.21.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.0.0",
+    "simple-git": "^3.24.0",
+    "yaml": "^2.4.0"
+  }
+}
