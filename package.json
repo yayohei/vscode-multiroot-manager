@@ -2,7 +2,7 @@
   "name": "vscode-multiroot-manager",
   "displayName": "Multiroot Manager",
   "description": "Manage multi-repository workspaces per issue/ticket with git worktree, GitHub integration, and Claude Code context",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "itpf-1g-dena",
   "license": "MIT",
   "engines": {
