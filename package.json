@@ -159,7 +159,11 @@
           "default": "-",
           "scope": "window",
           "order": 11,
-          "enum": ["-", "_", "/"],
+          "enum": [
+            "-",
+            "_",
+            "/"
+          ],
           "enumDescriptions": [
             "Hyphen (recommended): SHOP-123",
             "Underscore: SHOP_123",
@@ -229,6 +233,7 @@
     "@typescript-eslint/parser": "^7.0.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.0",
+    "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.21.0",
     "eslint": "^8.57.0",
     "typescript": "^5.4.0"

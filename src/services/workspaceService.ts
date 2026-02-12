@@ -23,15 +23,23 @@ export class WorkspaceService {
   generateWorkspace(
     issueDir: string,
     issueId: string,
-    repos: Repository[]
+    repos: Repository[],
+    repoOrgs?: Map<string, string> // repo.name -> org
   ): string {
     const workspaceFilePath = path.join(issueDir, `${issueId}.code-workspace`);
 
     // Create folders array (all repo worktrees)
-    const folders: WorkspaceFolder[] = repos.map(repo => ({
-      path: path.join(issueDir, repo.name),
-      name: repo.name
-    }));
+    const folders: WorkspaceFolder[] = repos.map(repo => {
+      const org = repoOrgs?.get(repo.name);
+      const folderPath = org
+        ? path.join(issueDir, org, repo.name)
+        : path.join(issueDir, repo.name);
+
+      return {
+        path: folderPath,
+        name: repo.name
+      };
+    });
 
     // Create workspace configuration
     const workspace: WorkspaceFile = {

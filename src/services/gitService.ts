@@ -125,6 +125,37 @@ export class GitService {
   }
 
   /**
+   * Get organization name from remote URL
+   * Supports: git@host:{org}/{repo}.git, ssh://git@host/{org}/{repo}.git, https://host/{org}/{repo}.git
+   */
+  async getOrgFromRemote(repoPath: string, remote: string = 'origin'): Promise<string> {
+    const git: SimpleGit = simpleGit(repoPath);
+
+    const remoteUrl = await git.raw(['remote', 'get-url', remote]);
+    const url = remoteUrl.trim();
+
+    // SSH URL format: ssh://git@github.com/{org}/{repo}.git
+    const sshUrlMatch = url.match(/^ssh:\/\/git@[^/]+\/([^/]+)\//);
+    if (sshUrlMatch) {
+      return sshUrlMatch[1];
+    }
+
+    // Standard SSH format: git@github.com:{org}/{repo}.git
+    const sshMatch = url.match(/^git@[^:]+:([^/]+)\//);
+    if (sshMatch) {
+      return sshMatch[1];
+    }
+
+    // HTTPS format: https://github.com/{org}/{repo}.git
+    const httpsMatch = url.match(/^https?:\/\/[^/]+\/([^/]+)\//);
+    if (httpsMatch) {
+      return httpsMatch[1];
+    }
+
+    throw new Error(`Failed to parse org from remote URL: ${url}`);
+  }
+
+  /**
    * Validate repository path
    */
   async isValidRepository(repoPath: string): Promise<boolean> {

@@ -60,11 +60,15 @@ export class IssueService {
 
     const repoStates: RepoState[] = [];
     const createdWorktrees: string[] = [];
+    const repoOrgs: Map<string, string> = new Map(); // repo.name -> org
 
     try {
       // Create worktrees and branches for each repository
       for (const repo of project.repositories) {
-        const worktreePath = path.join(issueDir, repo.name);
+        // Get org name from remote URL for directory structure
+        const org = await this.gitService.getOrgFromRemote(repo.path, repo.remote || 'origin');
+        repoOrgs.set(repo.name, org);
+        const worktreePath = path.join(issueDir, org, repo.name);
 
         // Validate repository exists
         const isValid = await this.gitService.isValidRepository(repo.path);
@@ -98,7 +102,8 @@ export class IssueService {
       this.workspaceService.generateWorkspace(
         issueDir,
         issueId,
-        project.repositories
+        project.repositories,
+        repoOrgs
       );
 
       // Generate .claude.md context file
