@@ -2,7 +2,7 @@
   "name": "vscode-multiroot-manager",
   "displayName": "Multiroot Manager",
   "description": "Manage multi-repository workspaces per issue/ticket with git worktree, GitHub integration, and Claude Code context",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "yayohei",
   "license": "MIT",
   "engines": {
@@ -78,6 +78,11 @@
         "command": "mrm.showStatus",
         "title": "MRM: Show Issue Status",
         "icon": "$(info)"
+      },
+      {
+        "command": "mrm.cleanupWorkspaces",
+        "title": "MRM: Cleanup Workspaces",
+        "icon": "$(clear-all)"
       }
     ],
     "menus": {
@@ -88,14 +93,9 @@
           "group": "navigation@1"
         },
         {
-          "command": "mrm.createIssue",
-          "when": "view == mrmProjects",
-          "group": "navigation@2"
-        },
-        {
           "command": "mrm.refreshAll",
           "when": "view == mrmProjects",
-          "group": "navigation@3"
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -108,6 +108,11 @@
           "command": "mrm.editProject",
           "when": "view == mrmProjects && viewItem == project",
           "group": "project@2"
+        },
+        {
+          "command": "mrm.createIssue",
+          "when": "view == mrmProjects && viewItem == project",
+          "group": "project@3"
         },
         {
           "command": "mrm.openWorkspace",

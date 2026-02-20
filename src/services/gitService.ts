@@ -21,16 +21,28 @@ export class GitService {
     // Ensure we're on latest base branch
     await git.fetch();
 
-    // Create worktree with new branch
-    // git worktree add -b <branch> <path> <base-branch>
-    await git.raw([
-      'worktree',
-      'add',
-      '-b',
-      branchName,
-      worktreePath,
-      `origin/${baseBranch}`
-    ]);
+    const exists = await this.branchExists(repoPath, branchName);
+
+    if (exists) {
+      // Checkout existing branch instead of creating a new one
+      await git.raw([
+        'worktree',
+        'add',
+        worktreePath,
+        branchName
+      ]);
+    } else {
+      // Create worktree with new branch
+      // git worktree add -b <branch> <path> <base-branch>
+      await git.raw([
+        'worktree',
+        'add',
+        '-b',
+        branchName,
+        worktreePath,
+        `origin/${baseBranch}`
+      ]);
+    }
   }
 
   /**

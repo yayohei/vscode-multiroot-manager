@@ -3,6 +3,7 @@
  */
 
 import * as path from 'path';
+import * as fs from 'fs';
 import { GitService } from './gitService';
 import { WorkspaceService } from './workspaceService';
 import { StateManager } from './stateManager';
@@ -38,10 +39,10 @@ export class IssueService {
       throw new Error(`Project not found: ${projectId}`);
     }
 
-    // Check if issue already exists
+    // Check if issue already exists (return as-is if already fully set up)
     const existingIssue = this.stateManager.getIssue(projectId, issueId);
     if (existingIssue) {
-      throw new Error(`Issue already exists: ${issueId}`);
+      return existingIssue;
     }
 
     // Create issue workspace directory
@@ -76,7 +77,7 @@ export class IssueService {
           throw new Error(`Invalid repository: ${repo.path}`);
         }
 
-        // Create worktree with new branch
+        // Create worktree (checks out existing branch if it already exists)
         await this.gitService.createWorktree(
           repo.path,
           worktreePath,
@@ -220,5 +221,49 @@ export class IssueService {
    */
   listIssues(projectId: string): Issue[] {
     return this.stateManager.loadIssues(projectId);
+  }
+
+  /**
+   * Find orphaned issue directories (exist in workspace but not in state)
+   */
+  async findOrphanedIssues(projectId: string): Promise<string[]> {
+    const workspaceDir = this.configManager.getWorkspaceDir();
+    const projectWorkspaceDir = path.join(workspaceDir, projectId);
+
+    // Get all issues from state
+    const activeIssues = this.stateManager.loadIssues(projectId);
+    const activeIssueIds = new Set(activeIssues.map(i => i.id));
+
+    // Get all directories in project workspace
+    const orphaned: string[] = [];
+
+    if (!fs.existsSync(projectWorkspaceDir)) {
+      return orphaned;
+    }
+
+    const entries = fs.readdirSync(projectWorkspaceDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (entry.isDirectory() && !activeIssueIds.has(entry.name)) {
+        orphaned.push(entry.name);
+      }
+    }
+
+    return orphaned;
+  }
+
+  /**
+   * Cleanup orphaned issue directories
+   */
+  async cleanupOrphanedIssues(projectId: string): Promise<number> {
+    const orphaned = await this.findOrphanedIssues(projectId);
+    const workspaceDir = this.configManager.getWorkspaceDir();
+
+    for (const issueId of orphaned) {
+      const issueDir = path.join(workspaceDir, projectId, issueId);
+      this.workspaceService.removeIssueDirectory(issueDir);
+    }
+
+    return orphaned.length;
   }
 }

@@ -54,7 +54,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('mrm.deleteIssue', deleteIssueCommand),
     vscode.commands.registerCommand('mrm.refreshAll', refreshAllCommand),
     vscode.commands.registerCommand('mrm.showStatus', showStatusCommand),
-    vscode.commands.registerCommand('mrm.switchIssue', switchIssueCommand)
+    vscode.commands.registerCommand('mrm.switchIssue', switchIssueCommand),
+    vscode.commands.registerCommand('mrm.cleanupWorkspaces', cleanupWorkspacesCommand)
   );
 
   outputChannel.appendLine('All commands registered');
@@ -998,6 +999,72 @@ async function switchIssueCommand(): Promise<void> {
     await vscode.commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: true });
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to switch issue: ${error}`);
+  }
+}
+
+/**
+ * Cleanup orphaned workspace directories
+ */
+async function cleanupWorkspacesCommand(): Promise<void> {
+  try {
+    // Get all projects
+    const projects = projectManager.listProjects();
+
+    if (projects.length === 0) {
+      vscode.window.showInformationMessage('No projects found');
+      return;
+    }
+
+    // Find all orphaned issues across all projects
+    let totalOrphaned = 0;
+    const orphanedByProject: { [key: string]: string[] } = {};
+
+    for (const project of projects) {
+      const orphaned = await issueService.findOrphanedIssues(project.id);
+      if (orphaned.length > 0) {
+        orphanedByProject[project.id] = orphaned;
+        totalOrphaned += orphaned.length;
+      }
+    }
+
+    if (totalOrphaned === 0) {
+      vscode.window.showInformationMessage('✅ No orphaned workspace directories found');
+      return;
+    }
+
+    // Show confirmation dialog
+    const message = `Found ${totalOrphaned} orphaned workspace ${totalOrphaned === 1 ? 'directory' : 'directories'}:\n\n` +
+      Object.entries(orphanedByProject)
+        .map(([projectId, issues]) => `${projectId}: ${issues.join(', ')}`)
+        .join('\n');
+
+    const choice = await vscode.window.showWarningMessage(
+      message,
+      { modal: true },
+      'Delete All',
+      'Cancel'
+    );
+
+    if (choice !== 'Delete All') {
+      return;
+    }
+
+    // Delete all orphaned directories
+    let deletedCount = 0;
+    for (const project of projects) {
+      const count = await issueService.cleanupOrphanedIssues(project.id);
+      deletedCount += count;
+    }
+
+    vscode.window.showInformationMessage(
+      `🗑️ Deleted ${deletedCount} orphaned workspace ${deletedCount === 1 ? 'directory' : 'directories'}`
+    );
+
+    // Refresh tree view
+    treeProvider.refresh();
+
+  } catch (error) {
+    vscode.window.showErrorMessage(`Failed to cleanup workspaces: ${error}`);
   }
 }
 
