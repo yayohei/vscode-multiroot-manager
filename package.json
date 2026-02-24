@@ -21,7 +21,7 @@
         {
           "id": "mrm-explorer",
           "title": "Multiroot Manager",
-          "icon": "$(folder-library)"
+          "icon": "images/icon.svg"
         }
       ]
     },
