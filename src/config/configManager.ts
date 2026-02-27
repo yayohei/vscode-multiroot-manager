@@ -59,20 +59,6 @@ export class ConfigManager {
       configDir,
       workspaceDir,
       branchNaming,
-      github: {
-        defaultOwner: vscodeConfig.get<string>('github.defaultOwner') ||
-                     fileConfig.github?.defaultOwner,
-        defaultRepo: vscodeConfig.get<string>('github.defaultRepo') ||
-                    fileConfig.github?.defaultRepo
-      },
-      gemini: {
-        model: vscodeConfig.get<string>('gemini.model') ||
-               fileConfig.gemini?.model ||
-               'gemini-2.5-flash',
-        enabled: vscodeConfig.get<boolean>('gemini.enabled') ??
-                fileConfig.gemini?.enabled ??
-                true
-      }
     };
   }
 

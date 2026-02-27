@@ -5,7 +5,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';
-import { Issue, IssuesData, Project } from '../models/types';
+import { Issue, IssuesData } from '../models/types';
 import { getProjectDataDir } from '../config/paths';
 
 export class StateManager {
@@ -113,32 +113,6 @@ export class StateManager {
   getIssue(projectId: string, issueId: string): Issue | undefined {
     const issues = this.loadIssues(projectId);
     return issues.find(i => i.id === issueId);
-  }
-
-  /**
-   * Get all projects with their issues
-   */
-  getAllProjectsWithIssues(projects: Project[]): Map<string, Issue[]> {
-    const map = new Map<string, Issue[]>();
-
-    for (const project of projects) {
-      const issues = this.loadIssues(project.id);
-      map.set(project.id, issues);
-    }
-
-    return map;
-  }
-
-  /**
-   * Update issue status
-   */
-  updateIssueStatus(projectId: string, issueId: string, status: Issue['status']): void {
-    const issue = this.getIssue(projectId, issueId);
-    if (issue) {
-      issue.status = status;
-      issue.updatedAt = new Date().toISOString();
-      this.saveIssue(projectId, issue);
-    }
   }
 
   /**

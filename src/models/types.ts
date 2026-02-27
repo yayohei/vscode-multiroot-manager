@@ -14,14 +14,6 @@ export interface Config {
   configDir: string;
   workspaceDir: string;
   branchNaming: BranchNaming;
-  github?: {
-    defaultOwner?: string;
-    defaultRepo?: string;
-  };
-  gemini?: {
-    model: string;
-    enabled: boolean;
-  };
 }
 
 // --- Project Types ---

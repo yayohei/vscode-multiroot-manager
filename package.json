@@ -195,8 +195,7 @@
     "typescript": "^5.4.0"
   },
   "dependencies": {
-    "@octokit/rest": "^21.0.0",
-    "simple-git": "^3.24.0",
+"simple-git": "^3.24.0",
     "yaml": "^2.4.0"
   }
 }
