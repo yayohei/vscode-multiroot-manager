@@ -121,10 +121,6 @@ Settings can be changed through VS Code UI or settings.json.
 | `mrm.workspaceDir` | `~/workspaces` | Workspace output directory |
 | `mrm.branchNaming.pattern` | `feature/{issue_id}` | Branch naming pattern |
 | `mrm.branchNaming.separator` | `-` | Separator for issue IDs (`-`, `_`, or `/`) |
-| `mrm.github.defaultOwner` | `""` | Default GitHub owner (Phase 3) |
-| `mrm.github.defaultRepo` | `""` | Default GitHub repo (Phase 3) |
-| `mrm.gemini.model` | `gemini-2.5-flash` | Gemini AI model (Phase 4) |
-| `mrm.gemini.enabled` | `true` | Enable AI features (Phase 4) |
 
 #### Through settings.json
 
@@ -215,21 +211,6 @@ You can use both the extension and CLI tool interchangeably.
 - **Issue Service**: Orchestrates issue creation and deletion
 - **TreeView**: Displays projects, issues, and repositories
 
-## Roadmap
-
-### Phase 3: GitHub Integration (Planned)
-- Fetch issue metadata from GitHub
-- Create pull requests
-- Display CI status in tree view
-
-### Phase 4: AI Integration (Planned)
-- Gemini-powered code review
-- AI-generated PR descriptions
-
-### Phase 5: Polish (Planned)
-- Enhanced error handling
-- Status refresh automation
-- Workspace templates
 
 ## Development
 
