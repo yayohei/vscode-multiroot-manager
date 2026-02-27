@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Background -->
+  <rect width="128" height="128" rx="20" fill="#1e1e2e"/>
+
+  <!-- Folder stack (3 repos) -->
+  <!-- Back folder -->
+  <rect x="44" y="26" width="52" height="38" rx="4" fill="#313244"/>
+  <path d="M44 30 Q44 26 48 26 L58 26 Q62 26 64 30 L64 30 L96 30 Q100 30 100 34 L100 64 Q100 68 96 68 L48 68 Q44 68 44 64 Z" fill="#45475a"/>
+
+  <!-- Middle folder -->
+  <rect x="36" y="38" width="52" height="38" rx="4" fill="#313244"/>
+  <path d="M36 42 Q36 38 40 38 L50 38 Q54 38 56 42 L56 42 L88 42 Q92 42 92 46 L92 76 Q92 80 88 80 L40 80 Q36 80 36 76 Z" fill="#585b70"/>
+
+  <!-- Front folder (active) -->
+  <rect x="28" y="50" width="52" height="42" rx="4" fill="#313244"/>
+  <path d="M28 54 Q28 50 32 50 L42 50 Q46 50 48 54 L48 54 L80 54 Q84 54 84 58 L84 92 Q84 96 80 96 L32 96 Q28 96 28 92 Z" fill="#89b4fa"/>
+
+  <!-- Branch lines inside front folder -->
+  <circle cx="40" cy="67" r="3" fill="#1e1e2e"/>
+  <line x1="40" y1="70" x2="40" y2="78" stroke="#1e1e2e" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="40" cy="81" r="3" fill="#1e1e2e"/>
+  <line x1="43" y1="81" x2="52" y2="75" stroke="#1e1e2e" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="55" cy="72" r="3" fill="#1e1e2e"/>
+
+  <!-- Small branch dot (top right accent) -->
+  <circle cx="96" cy="32" r="6" fill="#a6e3a1"/>
+  <circle cx="96" cy="32" r="3" fill="#1e1e2e"/>
+</svg>

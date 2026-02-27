@@ -4,6 +4,7 @@
   "description": "Manage multi-repository workspaces per issue/ticket with git worktree, GitHub integration, and Claude Code context",
   "version": "0.1.3",
   "publisher": "yayohei",
+  "icon": "images/icon.png",
   "license": "MIT",
   "engines": {
     "vscode": "^1.85.0"
