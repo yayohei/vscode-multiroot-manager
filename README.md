@@ -4,7 +4,7 @@ Manage multi-repository workspaces per issue/ticket with git worktree, GitHub in
 
 ## Features
 
-### Core Features (Phase 2 - ✅ Implemented)
+### Core Features
 
 - **Issue Creation**: Create issues with automatic worktree and branch setup across multiple repositories
 - **Workspace Generation**: Generate `.code-workspace` files with all repositories included
@@ -31,7 +31,7 @@ MRM: Projects
 
 **Project Management**
 - `MRM: Create Project` - Create a new project with interactive wizard
-- `MRM: Show Project Info` - Display project details and configuration
+- `MRM: Edit Project` - Edit project settings and repositories (Webview GUI)
 - `MRM: Edit Project YAML` - Open project configuration file in editor
 
 **Issue Management**
@@ -196,12 +196,6 @@ Settings can be changed through VS Code UI or settings.json.
   - **Keep Branches**: Remove worktrees and workspace files only
   - **Remove Branches**: Delete everything including git branches
 
-## CLI Compatibility
-
-This extension is compatible with the `mrm` CLI tool and shares the same configuration directory (`~/.config/vscode-multiroot-manager/`).
-
-You can use both the extension and CLI tool interchangeably.
-
 ## Architecture
 
 - **Config Manager**: Reads YAML configuration files and VS Code settings
@@ -229,6 +223,31 @@ Press `F5` to launch Extension Development Host.
 
 ```bash
 npm run lint
+```
+
+### Test
+
+**Unit tests** (no VS Code required):
+
+```bash
+npm run test:unit          # run once
+npm run test:unit:watch    # watch mode
+```
+
+**VS Code integration tests**:
+
+```bash
+npm test
+```
+
+**Manual test environment**:
+
+```bash
+# Create test repos + test-project config
+bash scripts/setup-test-env.sh
+
+# Reset after manual testing (removes worktrees, branches, issues)
+bash scripts/reset-test-env.sh
 ```
 
 ## License

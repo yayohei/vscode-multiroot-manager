@@ -42,8 +42,8 @@
       },
       {
         "command": "mrm.showProjectInfo",
-        "title": "MRM: Show Project Info",
-        "icon": "$(info)"
+        "title": "MRM: Edit Project",
+        "icon": "$(edit)"
       },
       {
         "command": "mrm.editProject",
@@ -181,22 +181,26 @@
     "build": "node esbuild.js --production",
     "watch": "node esbuild.js --watch",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "test:unit": "vitest run src/test/unit",
+    "test:unit:watch": "vitest src/test/unit"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.0",
     "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.21.0",
     "eslint": "^8.57.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.9"
   },
   "dependencies": {
-"simple-git": "^3.24.0",
+    "simple-git": "^3.24.0",
     "yaml": "^2.4.0"
   }
 }
