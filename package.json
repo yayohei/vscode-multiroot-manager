@@ -171,50 +171,6 @@
           ],
           "description": "Separator for issue IDs with spaces",
           "markdownDescription": "Separator used when issue ID contains spaces\n\n**Example**: `SHOP 123` → `SHOP-123`"
-        },
-        "mrm.github.defaultOwner": {
-          "type": "string",
-          "default": "",
-          "scope": "window",
-          "order": 20,
-          "description": "Default GitHub organization/owner",
-          "markdownDescription": "Default GitHub repository owner for PR creation\n\n**Example**: `octocat` or `my-organization`\n\n_(Phase 3 feature)_"
-        },
-        "mrm.github.defaultRepo": {
-          "type": "string",
-          "default": "",
-          "scope": "window",
-          "order": 21,
-          "description": "Default GitHub repository name",
-          "markdownDescription": "Default GitHub repository name for PR creation\n\n**Example**: `my-repo`\n\n_(Phase 3 feature)_"
-        },
-        "mrm.gemini.model": {
-          "type": "string",
-          "default": "gemini-2.5-flash",
-          "scope": "window",
-          "order": 30,
-          "enum": [
-            "gemini-2.5-flash",
-            "gemini-2.5-pro",
-            "gemini-1.5-flash",
-            "gemini-1.5-pro"
-          ],
-          "enumDescriptions": [
-            "Gemini 2.5 Flash - Fastest, recommended",
-            "Gemini 2.5 Pro - Most capable",
-            "Gemini 1.5 Flash - Fast, older version",
-            "Gemini 1.5 Pro - Capable, older version"
-          ],
-          "description": "Gemini AI model",
-          "markdownDescription": "Gemini model for AI-powered features\n\n**Recommended**: `gemini-2.5-flash`\n\n_(Phase 4 feature)_"
-        },
-        "mrm.gemini.enabled": {
-          "type": "boolean",
-          "default": true,
-          "scope": "window",
-          "order": 31,
-          "description": "Enable AI-powered features",
-          "markdownDescription": "Enable AI-powered features (code review, PR description)\n\n**Requires**: Gemini API key\n\n_(Phase 4 feature)_"
         }
       }
     }
