@@ -131,6 +131,11 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     item.contextValue = 'project';
     item.iconPath = new vscode.ThemeIcon('folder-library');
     item.tooltip = node.project.description || node.project.name;
+    item.command = {
+      command: 'mrm.showProjectInfo',
+      title: 'Show Project Info',
+      arguments: [node]
+    };
 
     return item;
   }

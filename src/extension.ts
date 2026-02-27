@@ -13,6 +13,8 @@ import { StatusBarManager } from './statusBar/statusBarManager';
 import { createProjectCommand } from './commands/createProjectCommand';
 import { CreateIssueOptions, DeleteIssueOptions } from './models/types';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as yaml from 'yaml';
 
 let issueService: IssueService;
 let projectManager: ProjectManager;
@@ -346,6 +348,7 @@ async function showProjectInfoCommand(item?: any): Promise<void> {
     return;
   }
 
+  try {
   const project = item.project;
   const stateManager = new StateManager(configManager.getConfigDir());
   const issues = stateManager.loadIssues(project.id);
@@ -371,8 +374,43 @@ async function showProjectInfoCommand(item?: any): Promise<void> {
   panel.webview.onDidReceiveMessage(
     async (message) => {
       switch (message.command) {
+        case 'browseTemplate':
+          try {
+            const uris = await vscode.window.showOpenDialog({
+              canSelectFiles: true,
+              canSelectFolders: true,
+              canSelectMany: false,
+              openLabel: 'Select template file or directory'
+            });
+            if (uris && uris.length > 0) {
+              const src = uris[0].fsPath;
+              const isDir = fs.statSync(src).isDirectory();
+              panel.webview.postMessage({
+                command: 'setTemplateSrc',
+                index: message.index,
+                src,
+                isDir,
+                basename: path.basename(src)
+              });
+            }
+          } catch (e) { /* ignore */ }
+          break;
+
         case 'saveProject':
           try {
+            // Save templates directly to YAML
+            const projectFilePath2 = projectManager.getProjectFilePath(project.id);
+            const projectContent2 = fs.readFileSync(projectFilePath2, 'utf-8');
+            const projectData2 = yaml.parse(projectContent2);
+            if (message.data.templates && message.data.templates.length > 0) {
+              projectData2.templates = message.data.templates.map((t: any) =>
+                t.dest ? { src: t.src, dest: t.dest } : { src: t.src }
+              );
+            } else {
+              delete projectData2.templates;
+            }
+            fs.writeFileSync(projectFilePath2, yaml.stringify(projectData2), 'utf-8');
+
             // Update project
             projectManager.updateProject(project.id, {
               name: message.data.name,
@@ -407,7 +445,15 @@ async function showProjectInfoCommand(item?: any): Promise<void> {
   );
 
   // Generate HTML content
-  panel.webview.html = getProjectInfoHtml(project, issues, statusCounts);
+  try {
+    panel.webview.html = getProjectInfoHtml(project, issues, statusCounts);
+  } catch (htmlError) {
+    panel.webview.html = `<!DOCTYPE html><html><body style="padding:20px;font-family:monospace;color:red"><h2>Render Error</h2><pre>${String(htmlError)}</pre></body></html>`;
+    vscode.window.showErrorMessage(`Failed to render project info: ${htmlError}`);
+  }
+  } catch (error) {
+    vscode.window.showErrorMessage(`Failed to show project info: ${error}`);
+  }
 }
 
 function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): string {
@@ -421,6 +467,39 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
     </tr>
   `).join('');
 
+  // Templates view
+  const templates = project.templates || [];
+  const templatesHtml = templates.length > 0 ? templates.map((t: any) => `
+    <tr>
+      <td><code>${t.src}</code></td>
+      <td><code>${t.dest || '(root)'}</code></td>
+    </tr>
+  `).join('') : '<tr><td colspan="2" style="text-align:center;color:var(--vscode-descriptionForeground)">No templates configured</td></tr>';
+
+  const templatesFormHtml = templates.map((t: any, index: number) => `
+    <div class="repo-item template-item" data-index="${index}">
+      <div class="repo-header">
+        <h4>Template ${index + 1}</h4>
+        <button class="btn-delete" onclick="removeTemplate(${index})">🗑️ Remove</button>
+      </div>
+      <div class="form-grid">
+        <label>Source:</label>
+        <div>
+          <div style="display:flex;gap:6px">
+            <input type="text" class="tmpl-src" value="${t.src}" placeholder="Path to file or directory" style="flex:1">
+            <button class="btn-secondary" onclick="browseTemplate(${index})" style="white-space:nowrap">📂 Browse</button>
+          </div>
+          <div class="hint">コピー元のファイルまたはディレクトリの絶対パス。</div>
+        </div>
+        <label>Dest:</label>
+        <div>
+          <input type="text" class="tmpl-dest" value="${t.dest || ''}" placeholder="例: .claude.md / claudedocs/">
+          <div class="hint">issue ワークスペース内の相対パス。ディレクトリは末尾に / を付ける。空白はルートに配置。</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
   // Editable form
   const repositoriesFormHtml = project.repositories.map((r: any, index: number) => `
     <div class="repo-item" data-index="${index}">
@@ -430,16 +509,28 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
       </div>
       <div class="form-grid">
         <label>Name:</label>
-        <input type="text" class="repo-name" value="${r.name}" required>
+        <div>
+          <input type="text" class="repo-name" value="${r.name}" required>
+          <div class="hint">ワークスペース内での識別名。重複不可。</div>
+        </div>
 
         <label>Path:</label>
-        <input type="text" class="repo-path" value="${r.path}" required>
+        <div>
+          <input type="text" class="repo-path" value="${r.path}" required>
+          <div class="hint">リポジトリのローカル絶対パス。</div>
+        </div>
 
         <label>Default Branch:</label>
-        <input type="text" class="repo-branch" value="${r.defaultBranch || r.default_branch}" required>
+        <div>
+          <input type="text" class="repo-branch" value="${r.defaultBranch || r.default_branch}" required>
+          <div class="hint">worktree 作成時の起点ブランチ（例: main, master）。</div>
+        </div>
 
         <label>Remote:</label>
-        <input type="text" class="repo-remote" value="${r.remote || 'origin'}" required>
+        <div>
+          <input type="text" class="repo-remote" value="${r.remote || 'origin'}" required>
+          <div class="hint">git remote 名（通常は origin）。</div>
+        </div>
       </div>
     </div>
   `).join('');
@@ -685,6 +776,12 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
       border-top: 1px solid var(--vscode-panel-border);
     }
 
+    .hint {
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+      margin-top: 3px;
+    }
+
     .toolbar {
       display: flex;
       justify-content: space-between;
@@ -739,6 +836,21 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
         </tbody>
       </table>
     </div>
+
+    <div class="section">
+      <h2><span class="icon">📋</span>Templates (${templates.length})</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Destination</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${templatesHtml}
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Edit Mode -->
@@ -747,13 +859,22 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
       <h2>Project Settings</h2>
       <div class="form-grid">
         <label>Project ID:</label>
-        <div><code>${project.id}</code> (read-only)</div>
+        <div>
+          <code>${project.id}</code>
+          <div class="hint">設定ファイル名 (${project.id}.yaml)。変更不可。</div>
+        </div>
 
         <label>Project Name:</label>
-        <input type="text" id="projectName" value="${project.name}" required>
+        <div>
+          <input type="text" id="projectName" value="${project.name}" required>
+          <div class="hint">TreeView に表示される名前。</div>
+        </div>
 
         <label>Description:</label>
-        <textarea id="projectDescription">${project.description || ''}</textarea>
+        <div>
+          <textarea id="projectDescription">${project.description || ''}</textarea>
+          <div class="hint">プロジェクトの概要（省略可）。</div>
+        </div>
       </div>
     </div>
 
@@ -763,6 +884,14 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
         ${repositoriesFormHtml}
       </div>
       <button class="btn-secondary" onclick="addRepository()">➕ Add Repository</button>
+    </div>
+
+    <div class="section">
+      <h2><span class="icon">📋</span>Templates</h2>
+      <div id="templatesList">
+        ${templatesFormHtml}
+      </div>
+      <button class="btn-secondary" onclick="addTemplate()">➕ Add Template</button>
     </div>
   </div>
 
@@ -795,6 +924,23 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
   <script>
     const vscode = acquireVsCodeApi();
     let repoCounter = ${project.repositories.length};
+    let tmplCounter = ${templates.length};
+
+    // Listen for messages from extension (e.g. file picker result)
+    window.addEventListener('message', event => {
+      const msg = event.data;
+      if (msg.command === 'setTemplateSrc') {
+        const item = document.querySelector(\`.template-item[data-index="\${msg.index}"]\`);
+        if (item) {
+          item.querySelector('.tmpl-src').value = msg.src;
+          if (msg.isDir && !item.querySelector('.tmpl-dest').value) {
+            item.querySelector('.tmpl-dest').value = msg.basename + '/';
+          } else if (!msg.isDir && !item.querySelector('.tmpl-dest').value) {
+            item.querySelector('.tmpl-dest').value = msg.basename;
+          }
+        }
+      }
+    });
 
     function enterEditMode() {
       document.body.classList.add('mode-edit');
@@ -844,6 +990,39 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
       }
     }
 
+    function addTemplate() {
+      const list = document.getElementById('templatesList');
+      const newItem = document.createElement('div');
+      newItem.className = 'repo-item template-item';
+      newItem.dataset.index = tmplCounter;
+      newItem.innerHTML = \`
+        <div class="repo-header">
+          <h4>Template \${tmplCounter + 1}</h4>
+          <button class="btn-delete" onclick="removeTemplate(\${tmplCounter})">🗑️ Remove</button>
+        </div>
+        <div class="form-grid">
+          <label>Source:</label>
+          <div style="display:flex;gap:6px">
+            <input type="text" class="tmpl-src" value="" placeholder="Path to file or directory" style="flex:1">
+            <button class="btn-secondary" onclick="browseTemplate(\${tmplCounter})" style="white-space:nowrap">📂 Browse</button>
+          </div>
+          <label>Dest:</label>
+          <input type="text" class="tmpl-dest" value="" placeholder="Relative path in issue workspace (blank = root)">
+        </div>
+      \`;
+      list.appendChild(newItem);
+      tmplCounter++;
+    }
+
+    function removeTemplate(index) {
+      const item = document.querySelector(\`.template-item[data-index="\${index}"]\`);
+      if (item) { item.remove(); }
+    }
+
+    function browseTemplate(index) {
+      vscode.postMessage({ command: 'browseTemplate', index });
+    }
+
     function saveProject() {
       const name = document.getElementById('projectName').value.trim();
       const description = document.getElementById('projectDescription').value.trim();
@@ -855,7 +1034,7 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
 
       // Collect repositories
       const repositories = [];
-      const repoItems = document.querySelectorAll('.repo-item');
+      const repoItems = document.querySelectorAll('.repo-item:not(.template-item)');
 
       for (const item of repoItems) {
         const repoName = item.querySelector('.repo-name').value.trim();
@@ -881,14 +1060,18 @@ function getProjectInfoHtml(project: any, issues: any[], statusCounts: any): str
         return;
       }
 
+      // Collect templates
+      const templates = [];
+      for (const item of document.querySelectorAll('.template-item')) {
+        const src = item.querySelector('.tmpl-src').value.trim();
+        const dest = item.querySelector('.tmpl-dest').value.trim();
+        if (src) { templates.push({ src, dest: dest || undefined }); }
+      }
+
       // Send data to extension
       vscode.postMessage({
         command: 'saveProject',
-        data: {
-          name,
-          description,
-          repositories
-        }
+        data: { name, description, repositories, templates }
       });
     }
   </script>
@@ -933,12 +1116,78 @@ async function editProjectCommand(item?: any): Promise<void> {
       projectId = selected.projectId;
     }
 
-    // Open YAML file in editor
-    const filePath = projectManager.getProjectFilePath(projectId);
-    const doc = await vscode.workspace.openTextDocument(filePath);
-    await vscode.window.showTextDocument(doc);
+    // Show edit options
+    const action = await vscode.window.showQuickPick([
+      { label: '$(file-code) Open YAML', description: 'Open project YAML file in editor', value: 'yaml' },
+      { label: '$(file-add) Add Template', description: 'Add a file or directory to copy on issue creation', value: 'addTemplate' },
+      { label: '$(trash) Remove Template', description: 'Remove a template entry', value: 'removeTemplate' }
+    ], { placeHolder: 'What do you want to edit?' });
+
+    if (!action) {
+      return;
+    }
+
+    // Read project YAML directly
+    const projectFilePath = projectManager.getProjectFilePath(projectId);
+    const projectContent = fs.readFileSync(projectFilePath, 'utf-8');
+    const projectData = yaml.parse(projectContent);
+    const currentTemplates: Array<{ src: string; dest?: string }> = projectData.templates || [];
+
+    if (action.value === 'yaml') {
+      const doc = await vscode.workspace.openTextDocument(projectFilePath);
+      await vscode.window.showTextDocument(doc);
+
+    } else if (action.value === 'addTemplate') {
+      const uris = await vscode.window.showOpenDialog({
+        canSelectFiles: true,
+        canSelectFolders: true,
+        canSelectMany: false,
+        openLabel: 'Select template file or directory'
+      });
+      if (!uris || uris.length === 0) {
+        return;
+      }
+      const src = uris[0].fsPath;
+      const stat = fs.statSync(src);
+      let dest: string | undefined;
+      if (!stat.isDirectory()) {
+        dest = await vscode.window.showInputBox({
+          prompt: 'Destination path relative to issue workspace',
+          value: path.basename(src),
+          placeHolder: 'e.g. claudedocs/myfile.md'
+        });
+        if (dest === undefined) {
+          return;
+        }
+      }
+      currentTemplates.push(dest ? { src, dest } : { src });
+      projectData.templates = currentTemplates;
+      fs.writeFileSync(projectFilePath, yaml.stringify(projectData), 'utf-8');
+      vscode.window.showInformationMessage(`Template added: ${src}`);
+
+    } else if (action.value === 'removeTemplate') {
+      if (currentTemplates.length === 0) {
+        vscode.window.showInformationMessage('No templates configured');
+        return;
+      }
+      const selected = await vscode.window.showQuickPick(
+        currentTemplates.map((t, i) => ({ label: t.src, description: t.dest, index: i })),
+        { placeHolder: 'Select template to remove' }
+      );
+      if (!selected) {
+        return;
+      }
+      currentTemplates.splice(selected.index, 1);
+      if (currentTemplates.length === 0) {
+        delete projectData.templates;
+      } else {
+        projectData.templates = currentTemplates;
+      }
+      fs.writeFileSync(projectFilePath, yaml.stringify(projectData), 'utf-8');
+      vscode.window.showInformationMessage(`Template removed: ${selected.label}`);
+    }
   } catch (error) {
-    vscode.window.showErrorMessage(`Failed to open project file: ${error}`);
+    vscode.window.showErrorMessage(`Failed to edit project: ${error}`);
   }
 }
 

@@ -139,7 +139,11 @@ export class ConfigManager {
               default_branch: repo.default_branch || 'main',
               remote: repo.remote || 'origin'
             })),
-            branchNaming: projectData.branch_naming || this.config.branchNaming
+            branchNaming: projectData.branch_naming || this.config.branchNaming,
+            templates: projectData.templates?.map((t: any) => ({
+              src: expandTilde(typeof t === 'string' ? t : t.src),
+              dest: t.dest
+            }))
           });
         }
       } catch (error) {
