@@ -4,7 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { Repository } from '../models/types';
+import { Repository, TemplateEntry } from '../models/types';
 
 interface WorkspaceFolder {
   path: string;
@@ -79,10 +79,30 @@ export class WorkspaceService {
     issueDir: string,
     issueId: string,
     title?: string,
-    description?: string
+    description?: string,
+    projectId?: string,
+    configDir?: string,
+    templates?: TemplateEntry[]
   ): void {
-    const contextFilePath = path.join(issueDir, '.claude.md');
+    // Copy from project-defined templates (no overwrite)
+    if (templates && templates.length > 0) {
+      for (const entry of templates) {
+        this.copyTemplateEntry(entry, issueDir);
+      }
+      return;
+    }
 
+    // Fallback: copy from default template directory (no overwrite)
+    if (projectId && configDir) {
+      const templateDir = path.join(configDir, 'templates', projectId);
+      if (fs.existsSync(templateDir)) {
+        this.copyTemplateDir(templateDir, issueDir);
+        return;
+      }
+    }
+
+    // Final fallback: generate default .claude.md
+    const contextFilePath = path.join(issueDir, '.claude.md');
     const content = `# Issue: ${issueId}
 
 ${title ? `## Title\n${title}\n\n` : ''}${description ? `## Description\n${description}\n\n` : ''}## Context
@@ -93,8 +113,48 @@ This workspace contains multiple repositories for working on issue ${issueId}.
 
 Check the workspace folders to see all repositories included in this issue.
 `;
-
     fs.writeFileSync(contextFilePath, content, 'utf-8');
+  }
+
+  /**
+   * Copy a single template entry (file or directory) to issue dir, no overwrite
+   */
+  private copyTemplateEntry(entry: TemplateEntry, issueDir: string): void {
+    const { src, dest } = entry;
+    if (!fs.existsSync(src)) {
+      return;
+    }
+    const stat = fs.statSync(src);
+    if (stat.isDirectory()) {
+      const destDir = dest ? path.join(issueDir, dest) : issueDir;
+      this.copyTemplateDir(src, destDir);
+    } else {
+      const destPath = dest
+        ? path.join(issueDir, dest)
+        : path.join(issueDir, path.basename(src));
+      if (!fs.existsSync(destPath)) {
+        fs.mkdirSync(path.dirname(destPath), { recursive: true });
+        fs.copyFileSync(src, destPath);
+      }
+    }
+  }
+
+  /**
+   * Recursively copy template directory to destination, skipping existing files
+   */
+  private copyTemplateDir(srcDir: string, destDir: string): void {
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+    for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+      const srcPath = path.join(srcDir, entry.name);
+      const destPath = path.join(destDir, entry.name);
+      if (entry.isDirectory()) {
+        this.copyTemplateDir(srcPath, destPath);
+      } else if (!fs.existsSync(destPath)) {
+        fs.copyFileSync(srcPath, destPath);
+      }
+    }
   }
 
   /**

@@ -33,12 +33,18 @@ export interface Repository {
   remote?: string; // Default: "origin"
 }
 
+export interface TemplateEntry {
+  src: string;  // File or directory path (~ supported)
+  dest?: string; // Destination relative to issue dir (required for files)
+}
+
 export interface Project {
   id: string; // Project directory name
   name: string;
   description?: string;
   repositories: Repository[];
   branchNaming?: BranchNaming; // Override global branch naming
+  templates?: TemplateEntry[]; // Files/dirs to copy into new issue workspace
 }
 
 // --- Issue State Types ---

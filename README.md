@@ -258,7 +258,3 @@ MIT
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
 
-## Support
-
-For issues and feature requests, please visit:
-https://github.com/yohei-yamamoto_dena/vscode-multiroot-manager-extension/issues

@@ -111,7 +111,10 @@ export class IssueService {
         issueDir,
         issueId,
         title,
-        description
+        description,
+        projectId,
+        this.configManager.getConfigDir(),
+        project.templates
       );
 
       // Create issue object

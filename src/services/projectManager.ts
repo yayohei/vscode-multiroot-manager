@@ -47,6 +47,18 @@ export class ProjectManager {
       throw new Error(`Project "${data.id}" already exists`);
     }
 
+    // Check for duplicate repository names or paths
+    const repoNames = data.repositories.map(r => r.name);
+    const dupName = repoNames.find((n, i) => repoNames.indexOf(n) !== i);
+    if (dupName) {
+      throw new Error(`Duplicate repository name: "${dupName}"`);
+    }
+    const repoPaths = data.repositories.map(r => r.path);
+    const dupPath = repoPaths.find((p, i) => repoPaths.indexOf(p) !== i);
+    if (dupPath) {
+      throw new Error(`Duplicate repository path: "${dupPath}"`);
+    }
+
     // Build YAML content
     const yamlContent: any = {
       name: data.name,
@@ -91,6 +103,16 @@ export class ProjectManager {
       existing.description = data.description;
     }
     if (data.repositories) {
+      const repoNames = data.repositories.map(r => r.name);
+      const dupName = repoNames.find((n, i) => repoNames.indexOf(n) !== i);
+      if (dupName) {
+        throw new Error(`Duplicate repository name: "${dupName}"`);
+      }
+      const repoPaths = data.repositories.map(r => r.path);
+      const dupPath = repoPaths.find((p, i) => repoPaths.indexOf(p) !== i);
+      if (dupPath) {
+        throw new Error(`Duplicate repository path: "${dupPath}"`);
+      }
       existing.repositories = data.repositories.map(repo => ({
         name: repo.name,
         path: repo.path,
