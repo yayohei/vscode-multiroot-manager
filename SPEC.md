@@ -15,8 +15,6 @@ Go CLI tool `mrm` (vscode-multiroot-manager) の機能を VSCode Extension と�
 | `mrm list` | TreeView: Issues | Sidebar panel |
 | `mrm status <id>` | TreeView: Issue detail | Expandable tree node |
 | `mrm open <id>` | Command: `mrm.openWorkspace` | Tree item click |
-| `mrm pr <id>` | Command: `mrm.createPR` | Context menu / button |
-| `mrm review <id>` | Command: `mrm.reviewCode` | Context menu / button |
 | `mrm project list` | TreeView: Projects | Top-level tree nodes |
 | Delete issue | Command: `mrm.deleteIssue` | Context menu |
 
@@ -28,21 +26,22 @@ Go CLI tool `mrm` (vscode-multiroot-manager) の機能を VSCode Extension と�
 src/
 ├── extension.ts              # Entry point (activate/deactivate)
 ├── models/
-│   └── types.ts              # Data types (from Go types.go)
+│   └── types.ts              # Data types
 ├── config/
 │   ├── configManager.ts      # YAML config read/write
 │   └── paths.ts              # XDG paths, tilde expansion
 ├── services/
 │   ├── gitService.ts         # Git/worktree operations (via simple-git)
-│   ├── githubService.ts      # GitHub API (via @octokit/rest)
-│   ├── workspaceService.ts   # .code-workspace generation
+│   ├── workspaceService.ts   # .code-workspace generation + template copy
 │   ├── stateManager.ts       # Issue state persistence (YAML)
 │   ├── issueService.ts       # Issue creation orchestrator
-│   └── prService.ts          # PR creation
+│   └── projectManager.ts     # Project YAML management
+├── commands/
+│   └── createProjectCommand.ts  # Interactive project creation wizard
 ├── views/
-│   ├── projectTreeProvider.ts  # TreeDataProvider for projects
-│   ├── issueTreeProvider.ts    # TreeDataProvider for issues
-│   └── issueDetailPanel.ts     # Webview for issue detail (optional)
+│   └── projectTreeProvider.ts   # TreeDataProvider: Project/Issue/Repo
+├── statusBar/
+│   └── statusBarManager.ts      # Current issue display in status bar
 └── test/
     └── suite/
         └── *.test.ts
@@ -54,12 +53,10 @@ src/
 |---|---|
 | `yaml` | YAML config read/write |
 | `simple-git` | Git/worktree operations |
-| `@octokit/rest` | GitHub API |
-| `glob` | File pattern matching |
 
 ### Extension Activation
 
-- **activationEvents**: `onView:mrmProjects`, `onCommand:mrm.*`
+- **activationEvents**: `onView:mrmProjects`
 - On activation: validate config directory exists, load projects
 
 ## UI Design
@@ -75,11 +72,10 @@ src/
 MRM: Projects
 ├── web-app (3 repos, 5 issues)
 │   ├── SHOP-456 - Add payment retry   [active]
-│   │   ├── frontend   ✓pushed  PR#234 ✅
-│   │   ├── backend    ✓pushed  PR#567 ✅
-│   │   └── common     ✓pushed  PR#89  ✅
-│   ├── SHOP-457 - Fix cart timeout     [active]
-│   └── SHOP-458 - Improve search UI   [pr_created]
+│   │   ├── frontend
+│   │   ├── backend
+│   │   └── common
+│   └── SHOP-457 - Fix cart timeout    [active]
 └── mobile-app (2 repos, 3 issues)
 ```
 
@@ -87,10 +83,12 @@ MRM: Projects
 
 | Command ID | Title |
 |---|---|
+| `mrm.createProject` | MRM: Create Project |
+| `mrm.showProjectInfo` | MRM: Show Project Info |
+| `mrm.editProject` | MRM: Edit Project YAML |
 | `mrm.createIssue` | MRM: Create Issue |
 | `mrm.openWorkspace` | MRM: Open Workspace |
-| `mrm.createPR` | MRM: Create Pull Request |
-| `mrm.reviewCode` | MRM: AI Code Review |
+| `mrm.switchIssue` | MRM: Switch Issue |
 | `mrm.deleteIssue` | MRM: Delete Issue |
 | `mrm.refreshAll` | MRM: Refresh |
 | `mrm.showStatus` | MRM: Show Issue Status |
@@ -101,13 +99,8 @@ MRM: Projects
 {
   "mrm.configDir": "~/.config/vscode-multiroot-manager",
   "mrm.workspaceDir": "~/workspaces",
-  "mrm.defaultEditor": "code",
   "mrm.branchNaming.pattern": "feature/{issue_id}",
-  "mrm.branchNaming.separator": "-",
-  "mrm.github.defaultOwner": "",
-  "mrm.github.defaultRepo": "",
-  "mrm.gemini.model": "gemini-2.5-flash",
-  "mrm.gemini.enabled": true
+  "mrm.branchNaming.separator": "-"
 }
 ```
 
@@ -124,61 +117,48 @@ CLI と Extension が同じ設定・データを参照し、併用可能。
 
 1. Command Palette → `MRM: Create Issue`
 2. Quick Pick: Select project
-3. Input Box: Issue ID or GitHub/Jira URL
+3. Input Box: Issue ID
 4. (Optional) Input Box: Title, Description
 5. Background:
-   - Fetch issue info (GitHub/Jira API)
    - Create branches (git worktree) in all repos
    - Generate `.code-workspace` file
-   - Generate `.claude.md` context files
-   - Copy Claude config files to worktrees
+   - Copy template files (project templates → default template dir → `.claude.md`)
    - Save state to `issues.yaml`
 6. TreeView refresh
 7. Notification: "Issue SHOP-456 created. Open workspace?"
 
-## Status Display
+## Template System
 
-TreeView items show inline:
-- Branch status (created/pushed)
-- PR status (number, state)
-- CI status (success/failure/pending)
+Issue作成時にファイル/ディレクトリをワークスペースにコピーする仕組み:
+
+**優先順位:**
+1. `projects/*.yaml` の `templates:` フィールド（GUI または YAML で設定）
+2. `~/.config/vscode-multiroot-manager/templates/{project}/` ディレクトリ
+3. デフォルト: `.claude.md` を自動生成
 
 ## Workspace Generation
 
-Same structure as CLI:
 ```
 ~/workspaces/{project}/{issue-id}/
 ├── {repo-name}/              # git worktree
-│   ├── .claude/
-│   ├── .claudedoc/
-│   └── .claude.md
+│   └── ...
 ├── {issue-id}.code-workspace
-└── .claude.md
+└── .claude.md                # or template files
 ```
 
-## Implementation Phases
+## Implementation Status
 
-### Phase 1: Foundation (Current)
+### ✅ Phase 1: Foundation
 - Project scaffolding
 - Type definitions
 - Config reading
 
-### Phase 2: Core
-- TreeView (projects + issues)
-- Issue creation (manual)
+### ✅ Phase 2: Core
+- TreeView (projects + issues + repos)
+- Project creation wizard
+- Issue creation / deletion
 - Workspace generation
-- Open workspace command
-
-### Phase 3: GitHub Integration
-- GitHub Issue fetch
-- PR creation
-- CI status display
-
-### Phase 4: AI Integration
-- Gemini code review
-- AI PR description
-
-### Phase 5: Polish
-- Delete issue with cleanup options
-- Status refresh
-- Error handling improvements
+- Template file copy
+- Open / switch workspace commands
+- Status bar integration
+- Project Info webview (view + edit)
